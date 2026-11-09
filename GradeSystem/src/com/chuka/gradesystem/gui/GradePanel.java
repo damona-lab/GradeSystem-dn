@@ -2,6 +2,7 @@ package com.chuka.gradesystem.gui;
 
 import com.chuka.gradesystem.model.*;
 import com.chuka.gradesystem.service.*;
+import com.chuka.gradesystem.util.Constants;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -109,14 +110,7 @@ public class GradePanel extends JPanel {
         scoreField = new JTextField(10);
         
         // Initialize semester combobox
-        String[] semesters = { 
- 
- "Semester 1 - 2024/2025",
- "Semester 2 - 2024/2025",
-  "Semester 1 - 2025/2026",
- "Semester 2- 2025/2026"
-};
-        semesterComboBox = new JComboBox<>(semesters);
+        semesterComboBox = new JComboBox<>(Constants.SEMESTERS);
         
         // Labels for calculated values
         letterGradeLabel = new JLabel("-");
@@ -558,7 +552,7 @@ public class GradePanel extends JPanel {
                 student.getName(), gpa, gradeService.getClassStanding(gpa),
                 gradeService.calculateTotalCredits(studentGrades));
             
-            if (gradeService.isHonorRoll(student)) {
+            if (gpa >= Constants.HONOR_ROLL_MIN) {
                 message += "\n\n🎉 Congratulations! This student is on the Honor Roll!";
             }
             
@@ -605,13 +599,13 @@ public class GradePanel extends JPanel {
                 // Get values from selected row
                 String studentName = (String) tableModel.getValueAt(selectedRow, 0);
                 String courseCode = (String) tableModel.getValueAt(selectedRow, 1);
-                double score = (Double) tableModel.getValueAt(selectedRow, 2);
+                double score = Double.parseDouble(tableModel.getValueAt(selectedRow, 2).toString());
                 String semester = (String) tableModel.getValueAt(selectedRow, 5);
                 
                 // Find student in combobox
                 for (int i = 0; i < studentComboBox.getItemCount(); i++) {
                     Student student = studentComboBox.getItemAt(i);
-                    if (student.getName().equals(studentName)) {
+                    if (student != null && (student.getName().equals(studentName) || studentName.equals(student.getStudentId()))) {
                         studentComboBox.setSelectedIndex(i);
                         break;
                     }

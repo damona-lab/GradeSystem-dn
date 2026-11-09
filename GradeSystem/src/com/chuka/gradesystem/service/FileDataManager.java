@@ -23,10 +23,19 @@ import java.util.stream.Collectors;
  */
 public class FileDataManager implements DataManager {
     // File paths for data storage
-    private static final String DATA_DIR = "data/";
+    private static final String DATA_DIR = resolveDataDir();
     private static final String STUDENTS_FILE = DATA_DIR + "students.dat";
     private static final String COURSES_FILE = DATA_DIR + "courses.dat";
     private static final String GRADES_FILE = DATA_DIR + "grades.dat";
+
+    private static String resolveDataDir() {
+        File localData = new File("data");
+        File gsData = new File("GradeSystem/data");
+        if (!localData.exists() && gsData.exists()) {
+            return "GradeSystem/data/";
+        }
+        return "data/";
+    }
     
     // In-memory storage (loaded from files)
     private List<Student> students;
@@ -63,18 +72,22 @@ public class FileDataManager implements DataManager {
             student.getGrades().clear();
         }
         
-        // Add grades to respective students
+        // Link actual instances and add grades to respective students
         for (Grade grade : grades) {
-            Student student = grade.getStudent();
-            if (student != null) {
-                // Find the actual student in our list (not the one from grade object)
-                Student actualStudent = findStudentById(student.getStudentId());
+            if (grade.getStudent() != null) {
+                Student actualStudent = findStudentById(grade.getStudent().getStudentId());
                 if (actualStudent != null) {
-                    // Create a new grade with the actual student reference
-                    Grade syncedGrade = new Grade(actualStudent, grade.getCourse(), 
-                                                 grade.getScore(), grade.getSemester());
-                    actualStudent.addGrade(syncedGrade);
+                    grade.setStudent(actualStudent);
                 }
+            }
+            if (grade.getCourse() != null) {
+                Course actualCourse = findCourseByCode(grade.getCourse().getCourseCode());
+                if (actualCourse != null) {
+                    grade.setCourse(actualCourse);
+                }
+            }
+            if (grade.getStudent() != null) {
+                grade.getStudent().addGrade(grade);
             }
         }
     }
@@ -132,7 +145,7 @@ public class FileDataManager implements DataManager {
         boolean removed = students.removeIf(s -> s.getStudentId().equals(studentId));
         if (removed) {
             // Also remove all grades for this student
-            grades.removeIf(g -> g.getStudent().getStudentId().equals(studentId));
+            grades.removeIf(g -> g.getStudent() != null && studentId.equals(g.getStudent().getStudentId()));
             saveGradesToFile();
             return saveStudentsToFile();
         }
@@ -242,7 +255,7 @@ public class FileDataManager implements DataManager {
         boolean removed = courses.removeIf(c -> c.getCourseCode().equals(courseCode));
         if (removed) {
             // Also remove all grades for this course
-            grades.removeIf(g -> g.getCourse().getCourseCode().equals(courseCode));
+            grades.removeIf(g -> g.getCourse() != null && courseCode.equals(g.getCourse().getCourseCode()));
             saveGradesToFile();
             return saveCoursesToFile();
         }
@@ -265,7 +278,8 @@ public class FileDataManager implements DataManager {
         }
         
         // Remove existing grade for same student and course
-        boolean removed = grades.removeIf(g ->
+        grades.removeIf(g ->
+            g.getStudent() != null && g.getCourse() != null &&
             g.getStudent().getStudentId().equals(grade.getStudent().getStudentId()) &&
             g.getCourse().getCourseCode().equals(grade.getCourse().getCourseCode())
         );
@@ -277,7 +291,7 @@ public class FileDataManager implements DataManager {
         // Also add the grade to the student's internal list for GPA calculations
         // First remove any existing grade for this course from student's list
         student.getGrades().removeIf(g -> 
-            g.getCourse().getCourseCode().equals(course.getCourseCode())
+            g.getCourse() != null && g.getCourse().getCourseCode().equals(course.getCourseCode())
         );
         // Add the new grade
         student.addGrade(newGrade);
@@ -389,6 +403,15 @@ public class FileDataManager implements DataManager {
     }
     
     // ========== PRIVATE FILE I/O METHODS ==========
+    private void mirrorSave(String fileName, Object data) {
+        if (!DATA_DIR.startsWith("GradeSystem") && new File("GradeSystem/data").isDirectory()) {
+            try (ObjectOutputStream oos = new ObjectOutputStream(
+                new FileOutputStream(new File("GradeSystem/data", fileName)))) {
+                oos.writeObject(data);
+            } catch (IOException ignored) {}
+        }
+    }
+
     /**
      * Save students to file using serialization
      * @return true if successful
@@ -397,6 +420,7 @@ public class FileDataManager implements DataManager {
         try (ObjectOutputStream oos = new ObjectOutputStream(
             new FileOutputStream(STUDENTS_FILE))) {
             oos.writeObject(students);
+            mirrorSave("students.dat", students);
             return true;
         } catch (IOException e) {
             System.err.println("Error saving students: " + e.getMessage());
@@ -417,7 +441,10 @@ public class FileDataManager implements DataManager {
         
         try (ObjectInputStream ois = new ObjectInputStream(
             new FileInputStream(STUDENTS_FILE))) {
-            students = (List<Student>) ois.readObject();
+            Object obj = ois.readObject();
+            if (obj instanceof List) {
+                students = (List<Student>) obj;
+            }
             return true;
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Error loading students: " + e.getMessage());
@@ -433,6 +460,7 @@ public class FileDataManager implements DataManager {
         try (ObjectOutputStream oos = new ObjectOutputStream(
             new FileOutputStream(COURSES_FILE))) {
             oos.writeObject(courses);
+            mirrorSave("courses.dat", courses);
             return true;
         } catch (IOException e) {
             System.err.println("Error saving courses: " + e.getMessage());
@@ -453,7 +481,10 @@ public class FileDataManager implements DataManager {
         
         try (ObjectInputStream ois = new ObjectInputStream(
             new FileInputStream(COURSES_FILE))) {
-            courses = (List<Course>) ois.readObject();
+            Object obj = ois.readObject();
+            if (obj instanceof List) {
+                courses = (List<Course>) obj;
+            }
             return true;
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Error loading courses: " + e.getMessage());
@@ -469,6 +500,7 @@ public class FileDataManager implements DataManager {
         try (ObjectOutputStream oos = new ObjectOutputStream(
             new FileOutputStream(GRADES_FILE))) {
             oos.writeObject(grades);
+            mirrorSave("grades.dat", grades);
             return true;
         } catch (IOException e) {
             System.err.println("Error saving grades: " + e.getMessage());
@@ -489,7 +521,10 @@ public class FileDataManager implements DataManager {
         
         try (ObjectInputStream ois = new ObjectInputStream(
             new FileInputStream(GRADES_FILE))) {
-            grades = (List<Grade>) ois.readObject();
+            Object obj = ois.readObject();
+            if (obj instanceof List) {
+                grades = (List<Grade>) obj;
+            }
             return true;
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Error loading grades: " + e.getMessage());

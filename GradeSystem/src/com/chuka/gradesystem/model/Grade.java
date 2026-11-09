@@ -1,5 +1,6 @@
 package com.chuka.gradesystem.model;
 import java.io.Serializable;
+import java.util.Objects;
 /**
  * Grade - Model Class
  *
@@ -16,6 +17,7 @@ import java.io.Serializable;
  * @institution Chuka University
  */
 public class Grade implements Serializable {
+    private static final long serialVersionUID = -6687771529431291272L;
  // Private fields
  private Student student;
  private Course course;
@@ -168,15 +170,38 @@ public class Grade implements Serializable {
  * @return Formatted grade information
  */
  public String getDetails() {
- return String.format("Course: %s\nScore: %.2f\nLetter Grade: %s\nGrade Point: %.1f\nS ",course.getCourseName(), score, letterGrade, gradePoint, getGradeStatus());
+     String courseName = course != null ? course.getCourseName() : "N/A";
+     return String.format("Course: %s\nScore: %.2f\nLetter Grade: %s\nGrade Point: %.1f\nStatus: %s\nSemester: %s",
+         courseName, score, letterGrade, gradePoint, getGradeStatus(), semester != null ? semester : "N/A");
  }
+
+ @Override
+ public boolean equals(Object o) {
+     if (this == o) return true;
+     if (o == null || getClass() != o.getClass()) return false;
+     Grade grade = (Grade) o;
+     String thisStudentId = student != null ? student.getStudentId() : null;
+     String otherStudentId = grade.student != null ? grade.student.getStudentId() : null;
+     String thisCourseCode = course != null ? course.getCourseCode() : null;
+     String otherCourseCode = grade.course != null ? grade.course.getCourseCode() : null;
+     return Objects.equals(thisStudentId, otherStudentId) &&
+            Objects.equals(thisCourseCode, otherCourseCode);
+ }
+
+ @Override
+ public int hashCode() {
+     String thisStudentId = student != null ? student.getStudentId() : null;
+     String thisCourseCode = course != null ? course.getCourseCode() : null;
+     return Objects.hash(thisStudentId, thisCourseCode);
+ }
+
  /**
  * toString method for string representation
  * @return String representation of Grade
  */
  @Override
  public String toString() {
- return String.format("%s: %.2f (%s)",
- course.getCourseCode(), score, letterGrade);
+     return String.format("%s: %.2f (%s)",
+         course != null ? course.getCourseCode() : "N/A", score, letterGrade);
  }
 }

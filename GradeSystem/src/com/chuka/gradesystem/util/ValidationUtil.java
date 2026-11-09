@@ -19,11 +19,11 @@ public class ValidationUtil {
  private static final Pattern EMAIL_PATTERN =
  Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
  private static final Pattern PHONE_PATTERN =
- Pattern.compile("^[0-9]{10}$|^\\+[0-9]{12}$");
+ Pattern.compile("^\\+?[0-9\\s-]{10,15}$");
  private static final Pattern STUDENT_ID_PATTERN =
- Pattern.compile("^[A-Z]{2,4}[0-9]{3,6}$");
+ Pattern.compile("^(?i)[A-Z]{2,4}[0-9]{3,6}$");
  private static final Pattern COURSE_CODE_PATTERN =
- Pattern.compile("^[A-Z]{3,4}\\s?[0-9]{3}$");
+ Pattern.compile("^(?i)[A-Z]{2,4}\\s?[0-9]{3,4}[A-Z]?$");
  /**
  * Private constructor to prevent instantiation
  * Utility classes should not be instantiated
@@ -117,7 +117,7 @@ public class ValidationUtil {
  if (name == null || name.trim().isEmpty()) {
  return false;
  }
- return name.trim().matches("^[a-zA-Z\\s]+$");
+ return name.trim().matches("^[a-zA-Z\\s.'-]+$");
  }
  /**
  * Sanitize string input

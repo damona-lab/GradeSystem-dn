@@ -319,7 +319,17 @@ public class CoursePanel extends JPanel {
             Course updatedCourse = new Course(newCourseCode, courseName, credits, instructor);
             
             // If course code hasn't changed or has no grades, use regular update
-            boolean success = dataManager.updateCourse(updatedCourse);
+            boolean success;
+            if (!originalCourseCode.equals(newCourseCode)) {
+                if (dataManager instanceof com.chuka.gradesystem.service.FileDataManager) {
+                    success = ((com.chuka.gradesystem.service.FileDataManager) dataManager).updateCourseWithCodeChange(originalCourseCode, updatedCourse);
+                } else {
+                    dataManager.deleteCourse(originalCourseCode);
+                    success = dataManager.saveCourse(updatedCourse);
+                }
+            } else {
+                success = dataManager.updateCourse(updatedCourse);
+            }
             
             if (success) {
                 dataManager.saveAllData();
@@ -546,7 +556,7 @@ public class CoursePanel extends JPanel {
         try {
             int credits = Integer.parseInt(creditsText);
             if (!ValidationUtil.isValidCredits(credits)) {
-                showValidationError("Credits must be between 1 and 6!");
+                showValidationError("Credits must be between 1 and 10!");
                 creditsField.requestFocus();
                 return false;
             }

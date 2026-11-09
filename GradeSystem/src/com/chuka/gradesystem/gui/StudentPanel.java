@@ -31,6 +31,8 @@ public class StudentPanel extends JPanel implements ActionListener, KeyListener 
  private JTextField idField, nameField, emailField, phoneField, studentIdField, searchField;
  private JComboBox<String> departmentCombo;
  private JSpinner yearSpinner;
+ // Track original student ID for updates
+ private String originalStudentId = "";
  // Buttons
  private JButton addButton, updateButton, deleteButton, clearButton, viewButton;
  /**
@@ -84,6 +86,11 @@ public class StudentPanel extends JPanel implements ActionListener, KeyListener 
  studentTable.setRowHeight(25);
  studentTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
  studentTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+ studentTable.getSelectionModel().addListSelectionListener(e -> {
+     if (!e.getValueIsAdjusting() && studentTable.getSelectedRow() != -1) {
+         loadSelectedStudent();
+     }
+ });
  // Add mouse listener for row selection
  studentTable.addMouseListener(new MouseAdapter() {
  @Override
@@ -213,16 +220,23 @@ public class StudentPanel extends JPanel implements ActionListener, KeyListener 
  if (!validateInput()) {
  return;
  }
+ String newStudentId = studentIdField.getText().trim();
+ if (dataManager.findStudentById(newStudentId) != null) {
+ JOptionPane.showMessageDialog(this, "Student with ID '" + newStudentId + "' already exists!",
+ "Error", JOptionPane.ERROR_MESSAGE);
+ return;
+ }
  Student student = new Student(
  idField.getText().trim(),
  nameField.getText().trim(),
  emailField.getText().trim(),
  phoneField.getText().trim(),
- studentIdField.getText().trim(),
+ newStudentId,
  (String) departmentCombo.getSelectedItem(),
  (Integer) yearSpinner.getValue()
  );
  if (dataManager.saveStudent(student)) {
+ dataManager.saveAllData();
  JOptionPane.showMessageDialog(this, "Student added successfully!");
  refreshData();
  clearForm();
@@ -238,19 +252,28 @@ public class StudentPanel extends JPanel implements ActionListener, KeyListener 
  if (!validateInput()) {
  return;
  }
- Student student = dataManager.findStudentById(studentIdField.getText().trim());
+ String newStudentId = studentIdField.getText().trim();
+ String lookupId = (originalStudentId != null && !originalStudentId.isEmpty()) ? originalStudentId : newStudentId;
+ Student student = dataManager.findStudentById(lookupId);
  if (student == null) {
  JOptionPane.showMessageDialog(this, "Student not found!",
  "Error", JOptionPane.ERROR_MESSAGE);
  return;
  }
+ if (!lookupId.equalsIgnoreCase(newStudentId) && dataManager.findStudentById(newStudentId) != null) {
+ JOptionPane.showMessageDialog(this, "Student ID '" + newStudentId + "' is already in use by another student!",
+ "Error", JOptionPane.ERROR_MESSAGE);
+ return;
+ }
  student.setId(idField.getText().trim());
+ student.setStudentId(newStudentId);
  student.setName(nameField.getText().trim());
  student.setEmail(emailField.getText().trim());
  student.setPhone(phoneField.getText().trim());
  student.setDepartment((String) departmentCombo.getSelectedItem());
  student.setYearOfStudy((Integer) yearSpinner.getValue());
  if (dataManager.updateStudent(student)) {
+ dataManager.saveAllData();
  JOptionPane.showMessageDialog(this, "Student updated successfully!");
  refreshData();
  clearForm();
@@ -290,6 +313,7 @@ public class StudentPanel extends JPanel implements ActionListener, KeyListener 
         boolean success = dataManager.deleteStudent(studentId);
 
         if (success) {
+            dataManager.saveAllData();
             JOptionPane.showMessageDialog(this, "Student deleted successfully!");
             refreshData();
             clearForm();
@@ -332,6 +356,7 @@ public class StudentPanel extends JPanel implements ActionListener, KeyListener 
  String studentId = (String) tableModel.getValueAt(selectedRow, 0);
  Student student = dataManager.findStudentById(studentId);
  if (student != null) {
+ originalStudentId = student.getStudentId();
  idField.setText(student.getId());
  studentIdField.setText(student.getStudentId());
  nameField.setText(student.getName());
@@ -352,6 +377,8 @@ public class StudentPanel extends JPanel implements ActionListener, KeyListener 
  phoneField.setText("");
  departmentCombo.setSelectedIndex(0);
  yearSpinner.setValue(1);
+ originalStudentId = "";
+ studentTable.clearSelection();
  }
  /**
  * Validate input fields

@@ -280,11 +280,13 @@ add(buttonPanel, BorderLayout.SOUTH);
         Map<String, CourseStats> stats = new HashMap<>();
         
         for (Grade grade : grades) {
-            String courseCode = grade.getCourse().getCourseCode();
-            CourseStats courseStat = stats.getOrDefault(courseCode, new CourseStats());
-            courseStat.totalScore += grade.getScore();
-            courseStat.count++;
-            stats.put(courseCode, courseStat);
+            if (grade != null && grade.getCourse() != null) {
+                String courseCode = grade.getCourse().getCourseCode();
+                CourseStats courseStat = stats.getOrDefault(courseCode, new CourseStats());
+                courseStat.totalScore += grade.getScore();
+                courseStat.count++;
+                stats.put(courseCode, courseStat);
+            }
         }
         
         Map<String, Double> averages = new HashMap<>();
@@ -402,8 +404,8 @@ add(buttonPanel, BorderLayout.SOUTH);
             
             if (barCount == 0) return;
             
-            int barWidth = Math.min(40, chartWidth / barCount - 10);
-            int barSpacing = (chartWidth - (barCount * barWidth)) / (barCount + 1);
+            int barWidth = Math.max(10, Math.min(40, chartWidth / barCount - 10));
+            int barSpacing = Math.max(5, (chartWidth - (barCount * barWidth)) / (barCount + 1));
             
             // Find maximum value for scaling
             double maxValue = 0;
@@ -417,7 +419,7 @@ add(buttonPanel, BorderLayout.SOUTH);
             for (int i = 0; i < barCount; i++) {
                 String courseCode = courseCodes.get(i);
                 double value = courseAverages.get(courseCode);
-                int barHeight = (int) ((value / maxValue) * chartHeight);
+                int barHeight = chartHeight > 0 ? Math.max(0, (int) ((value / maxValue) * chartHeight)) : 0;
                 
                 // Draw bar with gradient
                 Color barColor = CHART_COLORS[i % CHART_COLORS.length];

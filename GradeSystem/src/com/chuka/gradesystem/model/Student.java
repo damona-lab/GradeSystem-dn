@@ -2,6 +2,7 @@ package com.chuka.gradesystem.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 /**
  * Student - Concrete Class extending Person
  *
@@ -17,7 +18,8 @@ import java.util.List;
  * @institution Chuka University
  */
 public class Student extends Person implements Serializable {
- // Private fields specific to Student
+    private static final long serialVersionUID = -7482358354662197719L;
+    // Private fields specific to Student
  private String studentId;
  private String department;
  private int yearOfStudy;
@@ -112,8 +114,10 @@ public class Student extends Person implements Serializable {
  int totalCredits = 0;
  for (Grade grade : grades) {
  Course course = grade.getCourse();
+ if (course != null) {
  totalPoints += grade.getGradePoint() * course.getCredits();
  totalCredits += course.getCredits();
+ }
  }
  return totalCredits > 0 ? totalPoints / totalCredits : 0.0;
  }
@@ -124,7 +128,9 @@ public class Student extends Person implements Serializable {
  public int getTotalCredits() {
  int total = 0;
  for (Course course : enrolledCourses) {
+ if (course != null) {
  total += course.getCredits();
+ }
  }
  return total;
  }
@@ -151,17 +157,32 @@ public String getDetails() {
     return details.toString();
 }
  /**
+ * equals method for comparing Student objects
+ * @param o Object to compare
+ * @return true if equal, false otherwise
+ */
+ @Override
+ public boolean equals(Object o) {
+     if (this == o) return true;
+     if (o == null || getClass() != o.getClass()) return false;
+     Student student = (Student) o;
+     return Objects.equals(studentId, student.studentId);
+ }
+
+ @Override
+ public int hashCode() {
+     return Objects.hash(studentId);
+ }
+
+ /**
  * toString method for string representation
  * @return String representation of Student
  */
  @Override
  public String toString() {
- return "Student{" +
- "studentId='" + studentId + '\'' +
- ", name='" + getName() + '\'' +
- ", department='" + department + '\'' +
- ", year=" + yearOfStudy +
- ", GPA=" + String.format("%.2f", calculateGPA()) +
- '}';
+     if (studentId == null || studentId.trim().isEmpty()) {
+         return getName() != null ? getName() : "";
+     }
+     return studentId + " - " + (getName() != null ? getName() : "");
  }
 }

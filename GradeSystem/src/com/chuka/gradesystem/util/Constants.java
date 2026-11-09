@@ -61,10 +61,10 @@ public class Constants {
  };
  // Semesters
  public static final String[] SEMESTERS = {
- " 1 - 2024/2025",
- " 2 - 2024/2025",
- "Semester 1 - 2023/2024",
- "Semester 2 - 2023/2024"
+ "Semester 1 - 2024/2025",
+ "Semester 2 - 2024/2025",
+ "Semester 1 - 2025/2026",
+ "Semester 2 - 2025/2026"
  };
  // UI Constants
  public static final int WINDOW_WIDTH = 1200;
@@ -86,7 +86,7 @@ public class Constants {
     public static final String MSG_DELETE_CONFIRM = "Are you sure you want to delete this student?";
  public static final String MSG_SUCCESS = "Operation completed successfully!";
  public static final String MSG_ERROR = "An error occurred. Please try again.";
- public static final String MSG_VALIDATION_ERROR = "Please check your input and try again. public static final String MSG_DELETE_CONFIRM lease select a record first.";
+ public static final String MSG_VALIDATION_ERROR = "Please check your input and try again.";
  /**
  * Private constructor to prevent instantiation
  */

@@ -15,6 +15,7 @@ import java.util.Objects;
  * @institution Chuka University
  */
 public class Course implements Serializable {
+    private static final long serialVersionUID = 6251509704247163033L;
  // Private fields - ENCAPSULATION
  private String courseCode;
  private String courseName;

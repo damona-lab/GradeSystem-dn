@@ -255,9 +255,9 @@ public class ReportPanel extends JPanel {
         DecimalFormat df = new DecimalFormat("0.00");
         
         // Calculate statistics
-        double cgpa = gradeService.calculateCGPA(student);
+        double cgpa = gradeService.calculateGPA(grades);
         int totalCredits = gradeService.calculateTotalCredits(grades);
-        boolean isHonorRoll = gradeService.isHonorRoll(student);
+        boolean isHonorRoll = cgpa >= 3.5;
         String classStanding = gradeService.getClassStanding(cgpa);
         
         // Header
@@ -292,17 +292,18 @@ public class ReportPanel extends JPanel {
         double totalPoints = 0;
         for (Grade grade : grades) {
             Course course = grade.getCourse();
-            if (course != null) {
-                report.append(String.format("%-12s %-25s %-8d %-6.1f %-8s %-8.1f\n",
-                    course.getCourseCode(),
-                    truncate(course.getCourseName(), 23),
-                    course.getCredits(),
-                    grade.getScore(),
-                    grade.getLetterGrade(),
-                    grade.getGradePoint()
-                ));
-                totalPoints += grade.getGradePoint() * course.getCredits();
-            }
+            String code = course != null ? course.getCourseCode() : "N/A";
+            String name = course != null ? truncate(course.getCourseName(), 23) : "Unknown Course";
+            int credits = course != null ? course.getCredits() : 0;
+            report.append(String.format("%-12s %-25s %-8d %-6.1f %-8s %-8.1f\n",
+                code,
+                name,
+                credits,
+                grade.getScore(),
+                grade.getLetterGrade(),
+                grade.getGradePoint()
+            ));
+            totalPoints += grade.getGradePoint() * credits;
         }
         report.append("\n");
         

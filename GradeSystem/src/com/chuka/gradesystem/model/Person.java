@@ -15,6 +15,7 @@ import java.io.Serializable;
  * @institution Chuka University
  */
 public abstract class Person implements Serializable {
+    private static final long serialVersionUID = -4727140481789148075L;
  // Private fields demonstrating ENCAPSULATION
  // Data hiding - fields cannot be accessed directly from outside
  private String id;
